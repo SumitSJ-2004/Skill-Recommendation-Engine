@@ -1,11 +1,10 @@
-﻿namespace SkillRecommendationAPI.Models
-{
-    public class StudentSkill
-    {
-        public int StudentId { get; set; }
-        public Student Student { get; set; } = null!;
+﻿using SkillRecommendationAPI.Models;
 
-        public int SkillId { get; set; }
-        public Skill Skill { get; set; } = null!;
-    }
+public class StudentSkill
+{
+    public int StudentId { get; set; }
+    public Student? Student { get; set; }
+
+    public int SkillId { get; set; }
+    public Skill? Skill { get; set; }
 }
