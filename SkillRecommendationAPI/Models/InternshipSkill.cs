@@ -1,11 +1,17 @@
-﻿namespace SkillRecommendationAPI.Models
+﻿using System.Text.Json.Serialization;
+
+namespace SkillRecommendationAPI.Models
 {
     public class InternshipSkill
     {
         public int InternshipId { get; set; }
-        public Internship Internship { get; set; } = null!;
+
+        [JsonIgnore]
+        public Internship? Internship { get; set; }
 
         public int SkillId { get; set; }
-        public Skill Skill { get; set; } = null!;
+
+        [JsonIgnore]
+        public Skill? Skill { get; set; }
     }
 }
