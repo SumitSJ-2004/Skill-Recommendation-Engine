@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SkillRecommendationAPI.Data;
+using SkillRecommendationAPI.Models;
+
 
 namespace SkillRecommendationAPI.Controllers
 {
@@ -15,25 +17,58 @@ namespace SkillRecommendationAPI.Controllers
             _context = context;
         }
 
-        [HttpGet("{studentId}")]
-        public async Task<IActionResult> GetRecommendations(int studentId)
+        [HttpGet("advanced/{studentId}")]
+        public async Task<IActionResult> GetAdvancedRecommendations(int studentId)
         {
-            // Step 1: Get student's skill IDs
+            // Get student's skill IDs
             var studentSkillIds = await _context.StudentSkills
                 .Where(ss => ss.StudentId == studentId)
                 .Select(ss => ss.SkillId)
                 .ToListAsync();
 
-            // Step 2: Get internships matching those skills
-            var matchingInternships = await _context.InternshipSkills
-                .Where(isx => studentSkillIds.Contains(isx.SkillId))
-                .Include(isx => isx.Internship)
-                .Select(isx => isx.Internship)
-                .Distinct()
+            // Get all internships with their skills
+            var internships = await _context.Internships
+                .Include(i => i.InternshipSkills)
+                .ThenInclude(isx => isx.Skill)
                 .ToListAsync();
 
-            // Step 3: Return result
-            return Ok(matchingInternships);
+            var results = new List<RecommendationResult>();
+
+            foreach (var internship in internships)
+            {
+                var requiredSkills = internship.InternshipSkills
+                    .Select(isx => isx.SkillId)
+                    .ToList();
+
+                var matchedSkills = requiredSkills
+                    .Where(skillId => studentSkillIds.Contains(skillId))
+                    .ToList();
+
+                var missingSkills = internship.InternshipSkills
+                    .Where(isx => !studentSkillIds.Contains(isx.SkillId))
+                    .Select(isx => isx.Skill.Name)
+                    .ToList();
+
+                int matchScore = requiredSkills.Count == 0
+                    ? 0
+                    : (matchedSkills.Count * 100) / requiredSkills.Count;
+
+                results.Add(new RecommendationResult
+                {
+                    InternshipId = internship.Id,
+                    Title = internship.Title,
+                    Company = internship.Company,
+                    MatchScore = matchScore,
+                    MissingSkills = missingSkills
+                });
+            }
+
+            var rankedResults = results
+                .OrderByDescending(r => r.MatchScore)
+                .ToList();
+
+            return Ok(rankedResults);
         }
+
     }
 }

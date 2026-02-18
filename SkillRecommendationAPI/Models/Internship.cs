@@ -9,5 +9,7 @@
         public string Domain { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
+        public List<InternshipSkill> InternshipSkills { get; set; } = new List<InternshipSkill>();
+
     }
 }
